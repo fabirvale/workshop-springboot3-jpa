@@ -9,27 +9,32 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "tb_product")
-public class Product implements Serializable{
-	
+public class Product implements Serializable {
+
 	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY )
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	private String name;
 	private String description;
 	private Double price;
 	private String imgUrl;
+
+	// instanciando nesse momento para minha coleção não inicie valendo null, pode
+	// estar vazia, mas não nula
 	
-	//instanciando nesse momento para minha coleção não inicie valendo null, pode estar vazia, mas não nula
-	@Transient
+	@ManyToMany
+	@JoinTable(name = "tb_product_category", joinColumns = @JoinColumn(name = "product_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
 	private Set<Category> categories = new HashSet<>();
-	
+
 	private Product() {
-		
+
 	}
 
 	public Product(Long id, String name, String description, Double price, String imgUrl) {
@@ -81,12 +86,10 @@ public class Product implements Serializable{
 		this.imgUrl = imgUrl;
 	}
 
-	
 	public Set<Category> getCategories() {
 		return categories;
 	}
 
-	
 	@Override
 	public int hashCode() {
 		return Objects.hash(id);
@@ -103,7 +106,5 @@ public class Product implements Serializable{
 		Product other = (Product) obj;
 		return Objects.equals(id, other.id);
 	}
-	
-	
 
 }
