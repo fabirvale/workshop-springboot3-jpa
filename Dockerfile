@@ -1,26 +1,31 @@
-# Use Java 17 como base
-FROM eclipse-temurin:17-jdk-alpine
+# Etapa 1: Build com Maven
+FROM maven:3.9.4-eclipse-temurin-17 AS build
 
-# Diretório do app
 WORKDIR /app
 
-# Copia arquivos necessários para build
-COPY mvnw .
+# Copiar pom.xml e baixar dependências
 COPY pom.xml .
 COPY .mvn .mvn
+COPY mvnw .
+RUN chmod +x mvnw
+RUN mvn dependency:go-offline
+
+# Copiar o código-fonte
 COPY src ./src
 
-# Dá permissão de execução para o mvnw
-RUN chmod +x mvnw
-
-# Compila o projeto (skip tests para agilizar)
+# Build do projeto (skip tests)
 RUN ./mvnw clean package -DskipTests
 
-# Copia o JAR compilado
-COPY target/*.jar app.jar
+# Etapa 2: Imagem leve com JDK apenas
+FROM eclipse-temurin:17-jdk-alpine
 
-# Expõe a porta padrão do Spring Boot
+WORKDIR /app
+
+# Copiar o JAR compilado
+COPY --from=build /app/target/*.jar app.jar
+
+# Expor porta padrão do Spring Boot
 EXPOSE 8080
 
-# Comando para rodar a aplicação
+# Comando para rodar o Spring Boot
 ENTRYPOINT ["java","-jar","app.jar"]
